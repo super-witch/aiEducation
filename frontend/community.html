@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社区 - 数据结构AI学习助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .back-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            z-index: 100;
+        }
+        
+        .post-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .post-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .post-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+        
+        .post-content {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            white-space: pre-wrap;
+        }
+        
+        .post-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+            font-size: 13px;
+            color: #888;
+        }
+        
+        .like-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .like-count {
+            color: #666;
+        }
+        
+        .comment-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+        
+        .comment {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .comment-avatar {
+            font-size: 20px;
+        }
+        
+        .comment-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .comment-content {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        
+        .comment-likes {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .add-comment {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .add-comment input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .add-comment button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>📝 学习社区</h2>
+            <p>分享学习成果，一起进步</p>
+        </div>
+        
+        <div id="postsList" class="loading">加载中...</div>
+    </div>
+    
+    <button class="back-btn" id="backBtn">← 返回学习</button>
+    
+    <script>
+        let userId = localStorage.getItem('userId');
+        if (!userId) {
+            userId = 'user_' + Date.now();
+            localStorage.setItem('userId', userId);
+        }
+        
+        // 由于前端默认是运行静态文件，需要设置基准URL指向Node服务器
+        const API_BASE_URL = 'http://localhost:3000';
+        
+        async function apiGet(url) {
+            const response = await fetch(`${API_BASE_URL}${url}`, {
+                headers: { 'X-User-Id': userId }
+            });
+            return response.json();
+        }
+        
+        async function apiPost(url, data) {
+            const response = await fetch(`${API_BASE_URL}${url}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Id': userId
+                },
+                body: JSON.stringify(data)
+            });
+            return response.json();
+        }
+        
+        async function loadPosts() {
+            try {
+                const posts = await apiGet('/api/community/posts');
+                const postsList = document.getElementById('postsList');
+                
+                if (!posts || posts.length === 0) {
+                    postsList.innerHTML = '<div class="loading">暂无博文，快去学习并发布第一篇吧！</div>';
+                    return;
+                }
+                
+                postsList.innerHTML = posts.map(post => `
+                    <div class="post-card" data-id="${post.id}">
+                        <div class="post-title">${post.title}</div>
+                        <div class="post-content">${post.content}</div>
+                        <div class="post-meta">
+                            <span>📅 ${new Date(post.created_at).toLocaleString()}</span>
+                            <div style="display: flex; gap: 16px;">
+                                <button class="like-btn" data-id="${post.id}">
+                                    ❤️ <span class="like-count">${post.likes}</span>
+                                </button>
+                                <span>💬 ${post.comment_count || 0}</span>
+                            </div>
+                        </div>
+                        <div class="comment-section" data-id="${post.id}">
+                            <div class="comments-list"></div>
+                            <div class="add-comment">
+                                <input type="text" placeholder="写一条评论..." class="comment-input">
+                                <button class="submit-comment">发布</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // 加载每个博文的评论
+                for (const post of posts) {
+                    loadComments(post.id);
+                }
+                
+                // 绑定点赞事件
+                document.querySelectorAll('.like-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const postId = btn.dataset.id;
+                        await apiPost('/api/community/like', { postId });
+                        loadPosts(); // 刷新列表
+                    });
+                });
+                
+                // 绑定评论发布事件
+                document.querySelectorAll('.submit-comment').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const commentSection = btn.closest('.comment-section');
+                        const postId = commentSection.dataset.id;
+                        const input = commentSection.querySelector('.comment-input');
+                        const content = input.value.trim();
+                        
+                        if (!content) {
+                            alert('请输入评论内容');
+                            return;
+                        }
+                        
+                        await apiPost('/api/community/comment', { postId, content });
+                        input.value = '';
+                        loadComments(postId);
+                    });
+                });
+            } catch (error) {
+                document.getElementById('postsList').innerHTML = '<div class="loading">加载失败，请确认为服务是否已启动</div>';
+                console.error("加载贴文出错:", error);
+            }
+        }
+        
+        async function loadComments(postId) {
+            const data = await apiGet(`/api/community/post/${postId}`);
+            const commentSection = document.querySelector(`.comment-section[data-id="${postId}"]`);
+            const commentsList = commentSection.querySelector('.comments-list');
+            
+            if (data.comments && data.comments.length > 0) {
+                commentsList.innerHTML = data.comments.map(c => `
+                    <div class="comment">
+                        <div class="comment-header">
+                            <span class="comment-avatar">${c.avatar || '👤'}</span>
+                            <span class="comment-name">${c.persona_name || '用户'}</span>
+                        </div>
+                        <div class="comment-content">${c.content}</div>
+                        <div class="comment-likes">❤️ ${c.likes} 点赞</div>
+                    </div>
+                `).join('');
+            } else {
+                commentsList.innerHTML = '<div style="color:#888; font-size:12px; padding:8px;">暂无评论，抢个沙发吧</div>';
+            }
+        }
+        
+        document.getElementById('backBtn').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+        
+        loadPosts();
+    </script>
+</body>
+</html>

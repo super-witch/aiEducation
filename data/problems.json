@@ -1,0 +1,37 @@
+[
+    {
+        "id": "q001",
+        "title": "快速排序分区",
+        "content": "请写出快速排序对数组[5,2,8,3,6,1,9,4]进行第一个分区后的结果",
+        "knowledge_id": "SORT_02",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q002",
+        "title": "二叉树前序遍历",
+        "content": "请写出二叉树前序遍历的递归算法",
+        "knowledge_id": "TREE_01",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q003",
+        "title": "单链表反转",
+        "content": "请写出反转单链表的代码",
+        "knowledge_id": "LIST_01",
+        "difficulty": "medium"
+    },
+    {
+        "id": "q004",
+        "title": "栈的括号匹配",
+        "content": "给定一个只包含括号的字符串，判断括号是否匹配",
+        "knowledge_id": "STACK_01",
+        "difficulty": "easy"
+    },
+    {
+        "id": "q005",
+        "title": "二分查找",
+        "content": "在有序数组中实现二分查找算法",
+        "knowledge_id": "SEARCH_01",
+        "difficulty": "easy"
+    }
+]
